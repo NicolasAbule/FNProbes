@@ -1,4 +1,4 @@
-Type,Mining,Revenue,Maximum
+Probe,Mining,Revenue,Maximum
 Mining1,1,0.3,19
 Mining2,1.2,0.3,24
 Mining3,1.4,0.3,7
@@ -15,8 +15,8 @@ Revenue3,0.3,3,2
 Revenue4,0.3,3.5,6
 Revenue5,0.3,4,7
 Revenue6,0.3,4.5,4
-Storage,3000,3000,11
-Booster1,1.5,1.5,3
-Booster2,2,2,3
+Storage,0,0,11
+Booster1,0,0,3
+Booster2,0,0,3
 Duplicator,0,0,4
 Basic,0.5,0.5,104
