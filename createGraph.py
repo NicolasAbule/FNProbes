@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import miningValue as MV
 import revenueValue as RV
 import storageValue as SV
+import graphSolver as GS
 
 df = pd.read_csv('./fnSiteInfo.csv')
 
@@ -16,7 +17,7 @@ for _, row in df.iterrows():
         'FNSite': int(row['FNSite']),
         'Mirinium': int(row['Mirinium']),
         'Revenue': int(row['Revenue']),
-        'Probe': "Basic"
+        'Probe': "Revenue5"
     }
     G.add_node(row['FNSite'], **node_attributes)
 
@@ -26,7 +27,6 @@ for _, row in df.iterrows():
     for node in connected_nodes:
         G.add_edge(row['FNSite'], int(node.strip()))
 
-dfFNSite = pd.read_csv('./fnSiteInfo.csv')
 dfProbes = pd.read_csv('./probeInfo.csv')
 test = 315
 
@@ -39,6 +39,8 @@ print("Revenue value of node:", G.nodes[test]['Revenue'])
 print("Probe type of node:", G.nodes[test]['Probe'])
 print("Edges:", G.edges(test))
 
-print(MV.totalMiningValue(G,dfFNSite,dfProbes))
-print(RV.totalRevenueValue(G,dfFNSite,dfProbes))
+print(MV.totalMiningValue(G,df,dfProbes))
+print(RV.totalRevenueValue(G,df,dfProbes))
 print(SV.totalStorageValue(G))
+
+GS.simulatedAnnealing(G,df,dfProbes,100,10,10,0.8,0.9,10000000)
