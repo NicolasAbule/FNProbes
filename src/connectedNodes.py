@@ -12,9 +12,9 @@ def chainedSites(graph, startingSite, probeType):
             chainLength += 1
 
             # Recursively explore adjacent nodes
-            for neighbor in graph.neighbors(node):
-                if neighbor not in visitedNodes:
-                    dfs(neighbor)
+            for neighbour in graph.neighbors(node):
+                if neighbour not in visitedNodes:
+                    dfs(neighbour)
 
     # Start DFS exploration from the specified starting site
     dfs(startingSite)
@@ -31,18 +31,18 @@ def boostedSite(graph, site):
 
     booster = 1
 
-    for neighbor in graph.neighbors(site):
-        neighbor_probe_type = graph.nodes[neighbor].get("Probe")
-        if neighbor_probe_type == "Booster1":
+    for neighbour in graph.neighbors(site):
+        neighbour_probe_type = graph.nodes[neighbour].get("Probe")
+        if neighbour_probe_type == "Booster1":
             booster *= 1.5
-        elif neighbor_probe_type == "Booster2":
+        elif neighbour_probe_type == "Booster2":
             booster *= 2
-        elif neighbor_probe_type == "Duplicator":
+        elif neighbour_probe_type == "Duplicator":
             # Check if the duplicator is connected to a booster
-            for dup_neighbor in graph.neighbors(neighbor):
-                if graph.nodes[dup_neighbor].get("Probe") == "Booster1":
+            for dup_neighbour in graph.neighbors(neighbour):
+                if graph.nodes[dup_neighbour].get("Probe") == "Booster1":
                     booster *= 1.5
-                elif graph.nodes[dup_neighbor].get("Probe") == "Booster2":
+                elif graph.nodes[dup_neighbour].get("Probe") == "Booster2":
                     booster *= 2
 
     return booster
