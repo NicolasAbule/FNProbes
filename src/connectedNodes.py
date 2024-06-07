@@ -1,5 +1,15 @@
 def chainedSites(graph, startingSite, probeType):
 
+    """
+    recursively goes through node and their neighbours to check for same node type
+
+    :param graph: nx graph of map
+    :param startingSite: number of site to check for adjacent neighbours of same type
+    :param probeType: the probe on startingSite
+
+    :return: number corrresponding to bonus for chain length
+    """
+
     visitedNodes = set()
     chainLength = 0
 
@@ -28,6 +38,15 @@ def chainedSites(graph, startingSite, probeType):
         return 1
 
 def boostedSite(graph, site):
+
+    """
+    goes through adjacent nodes of site to check for boosters
+
+    :param graph: nx graph of map
+    :param site: number of site to check for adjacent boosters
+
+    :return: number corrresponding to bonus from all boosters
+    """
 
     booster = 1
 

@@ -4,12 +4,12 @@ import miningValue as MV
 import revenueValue as RV
 import storageValue as SV
 
-def simulatedAnnealing(G, dfFNSite, dfProbes, storageWeight, revenueWeight, miningWeight, temperature, coolingRate, iterations):
+def simulatedAnnealing(graph, dfFNSite, dfProbes, storageWeight, revenueWeight, miningWeight, temperature, coolingRate, iterations):
 
   """
   finds a graph that maximizes the total of storage, revenue and mining through simulated annealing approach
 
-  :param G: nx graph of map
+  :param graph: nx graph of map
   :param dfFNSite: dataframe of FNSite information containing per site revenue, per site mining, and sightseeing information
   :param dfProbes: dataframe of Probe information containing probe multipliers
   :param storageWeight: weight to multiply storage amount by to get weighted score
@@ -19,18 +19,37 @@ def simulatedAnnealing(G, dfFNSite, dfProbes, storageWeight, revenueWeight, mini
   :param coolingRate: rate at which temperature decreases to accept suboptimal solutions
   :param iterations: how many times the swaps will happen
 
-  :return G: altered graph with swapped nodes
+  :return graph: altered graph with swapped nodes
   :return bestValue: weighted sum of storage, revenue and mining.
   """
+
+  useableProbes = []
+  preassignedProbes = {}
+
+  with open("./data/probeData.txt", 'r') as file:
+    for line in file:
+      type, amount = line.strip().split(':')
+      for _ in range(int(amount)):
+        useableProbes.append(type)
   
-  useableProbes = ['Mining5', 'Mining5', 'Mining5', 'Mining5', 'Mining5', 'Mining5', 'Mining6', 'Mining6', 'Mining6', 'Mining6', 'Mining6', 'Mining6', 'Mining6', 'Mining6', 'Mining6', 'Mining6', 'Mining7', 'Mining7', 'Mining7', 'Mining7', 'Mining8', 'Mining8', 'Mining8', 'Mining8', 'Mining8', 'Mining8', 'Mining8', 'Mining8', 'Mining8', 'Mining8', 'Mining8', 'Mining8', 'Mining8', 'Mining8', 'Mining8', 'Mining8', 'Mining8', 'Mining8', 'Mining8', 'Mining8', 'Mining8', 'Mining8', 'Mining8', 'Mining9', 'Mining9', 'Mining9', 'Mining9', 'Mining9', 'Mining9', 'Mining9', 'Mining9', 'Mining9', 'Mining9', 'Mining10', 'Mining10', 'Mining10', 'Mining10', 'Revenue1', 'Revenue1', 'Revenue1', 'Revenue2', 'Revenue2', 'Revenue2', 'Revenue2', 'Revenue3', 'Revenue3', 'Revenue4', 'Revenue4', 'Revenue4', 'Revenue4', 'Revenue4', 'Revenue4', 'Revenue5', 'Revenue5', 'Revenue5', 'Revenue5', 'Revenue5', 'Revenue5', 'Revenue5', 'Revenue6', 'Revenue6', 'Revenue6', 'Revenue6', 'Storage', 'Storage', 'Storage', 'Storage', 'Storage', 'Storage', 'Storage', 'Storage', 'Storage', 'Storage', 'Storage', 'Booster1', 'Booster1', 'Booster1', 'Booster2', 'Booster2', 'Booster2', 'Duplicator', 'Duplicator', 'Duplicator', 'Duplicator']
+  with open("./data/assignedProbes.txt", 'r') as file:
+    for line in file:
+      node, probe = line.strip().split(':')
+      preassignedProbes[node] = probe
+
+  for probe in preassignedProbes.values():
+    useableProbes.remove(probe)
   random.shuffle(useableProbes)
 
-  for node in G.nodes:
-    G.nodes[node]['Probe'] = useableProbes.pop()
+  availableNodes = [node for node in graph.nodes if node not in [int(node) for node in preassignedProbes.keys()]]
+  for node in availableNodes:
+    graph.nodes[node]['Probe'] = useableProbes.pop()
 
-  bestValue = SV.totalStorageValue(G) * storageWeight + RV.totalRevenueValue(G,dfFNSite,dfProbes) * revenueWeight + MV.totalMiningValue(G,dfFNSite,dfProbes) * miningWeight
-  bestConfiguration = G.copy()
+  for node, probe in preassignedProbes.items():
+    graph.nodes[int(node)]['Probe'] = probe
+
+  bestValue = SV.totalStorageValue(graph) * storageWeight + RV.totalRevenueValue(graph,dfFNSite,dfProbes) * revenueWeight + MV.totalMiningValue(graph,dfFNSite,dfProbes) * miningWeight
+  bestConfiguration = graph.copy()
 
   #making it so less swaps occur after certain number of iterations
   initialSwaps = 8
@@ -43,25 +62,25 @@ def simulatedAnnealing(G, dfFNSite, dfProbes, storageWeight, revenueWeight, mini
       for _ in range(swapsPerIteration):
 
         # Choose two random nodes (avoid self-swapping)
-        node1, node2 = random.sample(list(G.nodes), 2)
+        node1, node2 = random.sample(availableNodes, 2)
         if node1 == node2:
           continue
 
         # Perform swap and calculate new value
-        probe1 = G.nodes[node1]['Probe']
-        probe2 = G.nodes[node2]['Probe']
-        G.nodes[node1]['Probe'], G.nodes[node2]['Probe'] = probe2, probe1
-        newValue = SV.totalStorageValue(G) * storageWeight + RV.totalRevenueValue(G, dfFNSite, dfProbes) * revenueWeight + MV.totalMiningValue(G, dfFNSite, dfProbes) * miningWeight
+        probe1 = graph.nodes[node1]['Probe']
+        probe2 = graph.nodes[node2]['Probe']
+        graph.nodes[node1]['Probe'], graph.nodes[node2]['Probe'] = probe2, probe1
+        newValue = SV.totalStorageValue(graph) * storageWeight + RV.totalRevenueValue(graph, dfFNSite, dfProbes) * revenueWeight + MV.totalMiningValue(graph, dfFNSite, dfProbes) * miningWeight
 
         deltaValue = newValue - bestValue
 
         if deltaValue >= 0 or random.random() < np.exp(deltaValue / temperature):
           bestValue = newValue
-          bestConfiguration = G.copy()
+          bestConfiguration = graph.copy()
 
         # Undo swap if not accepted
         if deltaValue < 0:
-          G.nodes[node1]['Probe'], G.nodes[node2]['Probe'] = probe1, probe2
+          graph.nodes[node1]['Probe'], graph.nodes[node2]['Probe'] = probe1, probe2
 
       temperature *= coolingRate
 
@@ -73,9 +92,9 @@ def simulatedAnnealing(G, dfFNSite, dfProbes, storageWeight, revenueWeight, mini
     for node, data in bestConfiguration.nodes(data=True):
       print(f"Node {node}: Probe - {data['Probe']}")
 
-    print(f"Total Storage Value: {SV.totalStorageValue(G)}")
-    print(f"Total Revenue Value: {RV.totalRevenueValue(G, dfFNSite, dfProbes)}")
-    print(f"Total Mining Value: {MV.totalMiningValue(G, dfFNSite, dfProbes)}")
+    print(f"Total Storage Value: {SV.totalStorageValue(graph)}")
+    print(f"Total Revenue Value: {RV.totalRevenueValue(graph, dfFNSite, dfProbes)}")
+    print(f"Total Mining Value: {MV.totalMiningValue(graph, dfFNSite, dfProbes)}")
     print(f"Program interrupted.")
     exit(0)
 
@@ -83,8 +102,8 @@ def simulatedAnnealing(G, dfFNSite, dfProbes, storageWeight, revenueWeight, mini
   for node, data in bestConfiguration.nodes(data=True):
     print(f"Node {node}: Probe - {data['Probe']}")
 
-  print(f"Total Storage Value: {SV.totalStorageValue(G)}")
-  print(f"Total Revenue Value: {RV.totalRevenueValue(G, dfFNSite, dfProbes)}")
-  print(f"Total Mining Value: {MV.totalMiningValue(G, dfFNSite, dfProbes)}")
+  print(f"Total Storage Value: {SV.totalStorageValue(graph)}")
+  print(f"Total Revenue Value: {RV.totalRevenueValue(graph, dfFNSite, dfProbes)}")
+  print(f"Total Mining Value: {MV.totalMiningValue(graph, dfFNSite, dfProbes)}")
 
-  return G, bestValue
+  return graph, bestValue
